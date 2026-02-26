@@ -1,0 +1,426 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    line-height: 1.6;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background: #161b22;
+    border-right: 1px solid #21262d;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 2rem 0;
+}
+
+.sidebar-header {
+    padding: 0 1.5rem 1.5rem;
+    border-bottom: 1px solid #21262d;
+    margin-bottom: 1.5rem;
+}
+
+.sidebar-header h2 {
+    color: #76a4d8;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.nav-links {
+    list-style: none;
+}
+
+.nav-links li {
+    margin-bottom: 0.25rem;
+}
+
+.nav-links a {
+    display: block;
+    padding: 0.75rem 1.5rem;
+    color: #8b949e;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.nav-links a:hover {
+    background: #1c2128;
+    color: #76a4d8;
+    border-left-color: #76a4d8;
+}
+
+.nav-links a.active {
+    color: #76a4d8;
+    background: #1c2128;
+    border-left-color: #76a4d8;
+    font-weight: 500;
+}
+
+.sub-links {
+    list-style: none;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.sub-links li {
+    margin-bottom: 0;
+}
+
+.sub-links a {
+    padding: 0.5rem 1.5rem 0.5rem 2.5rem;
+    font-size: 0.9rem;
+    border-left-width: 2px;
+}
+
+.sub-links a.active {
+    color: #79c0ff;
+    background: rgba(121, 192, 255, 0.05);
+    border-left-color: #79c0ff;
+}
+
+.sub-links a:hover {
+    color: #79c0ff;
+    border-left-color: #79c0ff;
+}
+
+.sub-sub-links {
+    list-style: none;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.sub-sub-links li {
+    margin-bottom: 0;
+}
+
+.sub-sub-links a {
+    padding: 0.4rem 1.5rem 0.4rem 3.5rem;
+    font-size: 0.85rem;
+    border-left-width: 2px;
+    color: #6e7681;
+}
+
+.sub-sub-links a.active {
+    color: #79c0ff;
+    background: rgba(121, 192, 255, 0.15);
+    border-left-color: #79c0ff;
+    font-weight: 400;
+}
+
+.sub-sub-links a:hover {
+    color: #79c0ff;
+    border-left-color: #79c0ff;
+    background: rgba(121, 192, 255, 0.08);
+}
+
+.main-link.active {
+    color: #76a4d8;
+    background: #1c2128;
+    border-left-color: #76a4d8;
+    font-weight: 500;
+}
+
+.content {
+    flex: 1;
+    margin-left: 250px;
+    padding: 3rem 4rem;
+    max-width: 1200px;
+}
+
+.content section {
+    margin-bottom: 4rem;
+}
+
+.content h1 {
+    color: #f0f6fc;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.content h2 {
+    color: #f0f6fc;
+    font-size: 1.875rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.content h3 {
+    color: #e6edf3;
+    font-size: 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.content p {
+    margin-bottom: 1rem;
+    color: #c9d1d9;
+    font-size: 1rem;
+}
+
+.content ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.content li {
+    margin-bottom: 0.5rem;
+    color: #c9d1d9;
+}
+
+.content code {
+    background: #161b22;
+    color: #ff7b72;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.content pre {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+.content pre code {
+    background: none;
+    padding: 0;
+    color: #c9d1d9;
+}
+
+.type-signature {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-left: 3px solid #58a6ff;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0 1.5rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.type-signature code {
+    background: none;
+    color: #c9d1d9;
+    padding: 0;
+    font-size: 1rem;
+}
+
+/* Return signature box for complex return types */
+.return-signature {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-left: 3px solid #79c0ff;
+    border-radius: 6px;
+    padding: 0.75rem 1.25rem;
+    margin: 1rem 0 1.5rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+    display: inline-block;
+}
+
+.return-signature-header {
+    color: #79c0ff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.return-signature-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.return-signature-item {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    padding-left: 1rem;
+    border-left: 2px solid rgba(121, 192, 255, 0.3);
+    padding-left: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.return-signature-item-type {
+    color: #79c0ff;
+    font-weight: 600;
+}
+
+.return-signature-item-desc {
+    color: #8b949e;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.parameter-signature {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-left: 3px solid #f85149;
+    border-radius: 6px;
+    padding: 0.75rem 1.25rem;
+    margin: 1rem 0 1.5rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+    display: inline-block;
+}
+
+.parameter-signature-header {
+    color: #f85149;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.parameter-signature-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.parameter-signature-item {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    padding-left: 0.75rem;
+    border-left: 2px solid rgba(248, 81, 73, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.parameter-signature-item-type {
+    color: #f85149;
+    font-weight: 600;
+}
+
+.parameter-signature-item-desc {
+    color: #8b949e;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Example signature for showing concrete examples */
+.example-signature {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-left: 3px solid #58a6ff;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0 1.5rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    overflow-x: auto;
+}
+
+.example-signature-header {
+    color: #79c0ff;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.85rem;
+}
+
+.example-signature-content {
+    color: #c9d1d9;
+    line-height: 1.5;
+    white-space: pre;
+    font-size: inherit;
+}
+
+.return-type {
+    color: #79c0ff;
+    font-weight: 600;
+}
+
+.method {
+    color: rgb(225, 79, 79);
+    text-decoration: none;
+    border-bottom: 1px dotted rgb(255, 144, 144);
+    transition: all 0.2s ease;
+    font-weight: 400;
+}
+
+.property {
+    color: #5db144;
+    text-decoration: none;
+    border-bottom: 1px dotted #79ff7b;
+    transition: all 0.2s ease;
+    font-weight: 400;
+}
+
+.property:hover {
+    color: #8bec76;
+    border-bottom-color: #73b969;
+    border-bottom-style: solid;
+}
+
+.parameter {
+    color: coral;
+    font-weight: 600;
+}
+
+
+.method-divider {
+    border: none;
+    border-top: 1px solid #21262d;
+    margin: 1.5rem 0 4rem 0;
+    height: 0;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #161b22;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #21262d;
+    border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #30363d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #21262d;
+    }
+    
+    .content {
+        margin-left: 0;
+        padding: 2rem 1.5rem;
+    }
+    
+    .container {
+        flex-direction: column;
+    }
+}
