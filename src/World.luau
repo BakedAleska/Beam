@@ -26,7 +26,6 @@ export type world = {
 	Events: { [string]: { event } },
 	Next: { [string]: { event } },
 	Craft_Entity: () -> number,
-	Register_Component: (Name: string, Weak: boolean?) -> (),
 	Register_Body: (Entity: number, Body: Instance) -> (),
 	Count: (Components: { string }) -> string?,
 	Kill: (Entity: number) -> (),
@@ -78,16 +77,6 @@ function World.new(): world
 	end
 
 	return self
-end
-
-function World.Register_Component(Name: string, Weak: boolean?)
-	if not World.Instance.Components[Name] then
-		if Weak then
-			World.Instance.Components[Name] = setmetatable({}, { __mode = "v" })
-		else
-			World.Instance.Components[Name] = {}
-		end
-	end
 end
 
 function World.Register_Body(Entity: number, Body: Instance)
