@@ -9,6 +9,9 @@ A lightweight ECS (Entity Component System) framework for Roblox.
 - **Memory Safe** - Weak keys for automatic cleanup
 - **Type-Safe** - Full Luau type annotations
 
+## Documentation
+https://bakedaleska.github.io/Beam/
+
 ## Basic Usage
 
 ```lua
