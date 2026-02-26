@@ -1,0 +1,15 @@
+{
+  "name": "Beam",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Beam": {
+        "$path": "src/Beam"
+      },
+      "Packages": {
+        "$path": "Packages"
+      }
+    }
+  }
+}
