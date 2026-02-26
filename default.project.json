@@ -5,7 +5,7 @@
 
     "ReplicatedStorage": {
       "Beam": {
-        "$path": "src/Beam"
+        "$path": "src"
       },
       "Packages": {
         "$path": "Packages"
