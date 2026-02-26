@@ -267,6 +267,42 @@
             <section id="properties">
                 <h2>Properties</h2>
             </section>
+            <section id="components">
+                <h3>Components</h3>
+                <p>A global table that stores all components for all entities. Components are organized by entity ID, then by component name.</p>
+                <div class="type-signature">
+                    <code>Components: { <span class="parameter">[number]</span>: { <span class="parameter">[string]</span>: { any } } }</code>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Structure:</p>
+                <div class="parameter-signature">
+                    <div class="parameter-signature-header">Table Structure</div>
+                    <div class="parameter-signature-items">
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">[number]: table</span>
+                            <span class="parameter-signature-item-desc">Entity ID mapped to its component table</span>
+                        </div>
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">[string]: table</span>
+                            <span class="parameter-signature-item-desc">Component name mapped to its data</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
+                <div class="example-signature">
+                    <div class="example-signature-content">Components = {
+    [1] = {
+        Health = { hp = 100, max = 100 },
+        Position = { x = 5, y = 10 }
+    },
+    [2] = {
+        Velocity = { dx = 1, dy = 0 }
+    }
+}</div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
+                <p>
+                    Use <a class="method" href="#assign-component">AssignComponent</a> to add components and <a class="method" href="#unassign-component">UnassignComponent</a> to remove them. This table is the core of the ECS architecture.
+                </p>
                 <div class="method-divider"></div>
             </section>
             
