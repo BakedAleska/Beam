@@ -14,26 +14,30 @@ https://bakedaleska.github.io/Beam/
 ## Basic Usage
 
 ```lua
-local World = require(game.ServerScriptService.Beam.World)
+local world = require(game.ServerScriptService.Beam.World)
+local RunService = game:GetService("RunService")
 
 -- Initialize world
-local world = World.new()
+local World = world.new()
 
 -- Create entity
-local entity = World.Craft_Entity()
+local Entity = World.CraftEntity()
 
 -- Assign components
-World.Assign_Component(entity, "Health", { value = 100 })
-World.Assign_Component(entity, "Position", { x = 0, y = 0, z = 0 })
+World.AssignComponent(Entity, "Health", { value = 100 })
+World.AssignComponent(Entity, "Position", { x = 0, y = 0, z = 0 })
+
+-- Add systems
+World.AddSystem(game.ServerScriptService.Beam.Systems.Movement, 1)
 
 -- Fire events
-World.Fire_Event({
+World.FireEvent({
     Event = "Damage",
-    Entity = entity,
+    Entity = Entity,
     Priority = 10
 })
 
-game.RunService.Heartbeat:Connect(World.Update)
+RunService.Heartbeat:Connect(World.Update)
 ```
 
 ## Credits
