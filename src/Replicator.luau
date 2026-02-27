@@ -45,4 +45,18 @@ function Replicator.Replicate(Pass: replicated, Body: Instance?)
 	end)
 end
 
+function Replicator.FireClient(Player: Player, Pass: replicated)
+	local Config: config = {
+		Token = TOKEN,
+		Data = Pass,
+	}
+
+	local Replica = replica.New(Config)
+	Replica:FireClient(Player)
+
+	task.defer(function()
+		Replica:Destroy()
+	end)
+end
+
 return Replicator

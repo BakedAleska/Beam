@@ -6,3 +6,4 @@ realm = "shared"
 
 [dependencies]
 replica = "aykut92/replica@0.1.7"
+maid = "blestooo/maid@0.1.1"
