@@ -225,7 +225,7 @@
                     <div class="parameter-signature-items">
                         <div class="parameter-signature-item">
                             <span class="parameter-signature-item-type">Event: string</span>
-                            <span class="parameter-signature-item-desc">Required - The name of the event (traditionally snakeCase)</span>
+                            <span class="parameter-signature-item-desc">Required - The name of the event (traditionally camelCase)</span>
                         </div>
                         <div class="parameter-signature-item">
                             <span class="parameter-signature-item-type">Entity: number</span>
@@ -252,7 +252,7 @@
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
-                    Event names should follow snakeCase convention (e.g., "takeDamage", "playerDied", "itemCollected"). The Event and Entity fields are required; all other fields are optional but recommended for specific use cases.
+                    Event names should follow camelCase convention (e.g., "takeDamage", "playerDied", "itemCollected"). The Event and Entity fields are required; all other fields are optional but recommended for specific use cases.
                 </p>
                 <div class="method-divider"></div>
             </section>
@@ -315,7 +315,7 @@ end</div>
                     <code>SubscribeTo: (<span class="parameter">Event: string, Callback: (Entity: number, Data: any) -> ()</span>) -> ()</code>
                 </div>
                 <p>
-                    Calls the provided callback for each entity that has the specified event in the current <a class="property" href="#events">Events</a> table. The Event parameter should match the Event field of fired events (traditionally snakeCase).
+                    Calls the provided callback for each entity that has the specified event in the current <a class="property" href="#events">Events</a> table. The Event parameter should match the Event field of fired events (traditionally camelCase).
                 </p>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Callback Parameters:</p>
                 <div class="parameter-signature">
@@ -468,7 +468,7 @@ end)</div>
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
-                    The Events table is swapped with <a class="property" href="#next">Next</a> during each <a class="method" href="#update">Update</a> call. Event names traditionally follow snakeCase convention. Each event must have an Event (name) and Entity field. See <a class="method" href="#fire-event">FireEvent</a> for complete event structure requirements.
+                    The Events table is swapped with <a class="property" href="#next">Next</a> during each <a class="method" href="#update">Update</a> call. Event names traditionally follow camelCase convention. Each event must have an Event (name) and Entity field. See <a class="method" href="#fire-event">FireEvent</a> for complete event structure requirements.
                 </p>
                 <div class="method-divider"></div>
             </section>
