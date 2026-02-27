@@ -220,6 +220,40 @@
                 <p>
                     Fires an event to be processed in the next frame. The event is added to the <a class="property" href="#next">Next</a> event queue.
                 </p>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Event Structure:</p>
+                <div class="parameter-signature">
+                    <div class="parameter-signature-items">
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">Event: string</span>
+                            <span class="parameter-signature-item-desc">Required - The name of the event (traditionally snakeCase)</span>
+                        </div>
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">Entity: number</span>
+                            <span class="parameter-signature-item-desc">Required - The entity ID this event is associated with</span>
+                        </div>
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">Body: Instance?</span>
+                            <span class="parameter-signature-item-desc">Optional - Instance reference associated with the event</span>
+                        </div>
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">Priority: number?</span>
+                            <span class="parameter-signature-item-desc">Optional - Processing priority (higher = earlier, default: 0)</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
+                <div class="example-signature">
+                    <div class="example-signature-content">World.FireEvent({
+    Event = "takeDamage",
+    Entity = 5,
+    Body = character,
+    Priority = 10
+})</div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
+                <p>
+                    Event names should follow snakeCase convention (e.g., "takeDamage", "playerDied", "itemCollected"). The Event and Entity fields are required; all other fields are optional but recommended for specific use cases.
+                </p>
                 <div class="method-divider"></div>
             </section>
             <section id="read-entity-event">
@@ -228,7 +262,7 @@
                     <code>ReadEntityEvent: (<span class="parameter">Entity: number, Name: string</span>) -> (<span class="return-type">boolean, number?</span>)</code>
                 </div>
                 <p>
-                    Checks if a specific entity has an event of the given name in the current <a class="property" href="#events">Events</a> table.
+                    Checks if a specific entity has a fired event of the given name in the current <a class="property" href="#events">Events</a> table. This is useful for checking if an entity received a specific event in the current frame.
                 </p>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Returns:</p>
                 <div class="return-signature">
@@ -236,11 +270,11 @@
                     <div class="return-signature-items">
                         <div class="return-signature-item">
                             <span class="return-signature-item-type">boolean</span>
-                            <span class="return-signature-item-desc">Found - whether the entity has the event</span>
+                            <span class="return-signature-item-desc">Found - whether the entity has the event in the current frame</span>
                         </div>
                         <div class="return-signature-item">
                             <span class="return-signature-item-type">number?</span>
-                            <span class="return-signature-item-desc">Status code - 0 if no event exists, 1 if event exists but entity not in it</span>
+                            <span class="return-signature-item-desc">Status code - 0 if no event with that name exists, 1 if event exists but entity not in it</span>
                         </div>
                     </div>
                 </div>
@@ -252,16 +286,26 @@
                     <code>ReadEvent: (<span class="parameter">Name: string</span>) -> <span class="return-type">{ event }?</span></code>
                 </div>
                 <p>
-                    Returns the event bucket for a given event name from the current <a class="property" href="#events">Events</a> table.
+                    Returns the array of all events with a given name from the current <a class="property" href="#events">Events</a> table. Each event in the array is an event table containing Event, Entity, Body (optional), and Priority (optional) fields.
                 </p>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Returns:</p>
                 <div class="return-signature">
                     <div class="return-signature-items">
                         <div class="return-signature-item">
                             <span class="return-signature-item-type">{ event }?</span>
-                            <span class="return-signature-item-desc">Event bucket - array of all events with that name, or nil if none</span>
+                            <span class="return-signature-item-desc">Array of event objects with that name, or nil if no events exist. Each event has Event (string), Entity (number), Body? (Instance), and Priority? (number) fields</span>
                         </div>
                     </div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
+                <div class="example-signature">
+                    <div class="example-signature-content">local events = World.ReadEvent("takeDamage")
+if events then
+    for _, event in events do
+        print("Entity:", event.Entity)
+        print("Priority:", event.Priority or "default")
+    end
+end</div>
                 </div>
                 <div class="method-divider"></div>
             </section>
@@ -271,8 +315,30 @@
                     <code>SubscribeTo: (<span class="parameter">Event: string, Callback: (Entity: number, Data: any) -> ()</span>) -> ()</code>
                 </div>
                 <p>
-                    Calls the provided callback for each entity that has the specified event in the current <a class="property" href="#events">Events</a> table.
+                    Calls the provided callback for each entity that has the specified event in the current <a class="property" href="#events">Events</a> table. The Event parameter should match the Event field of fired events (traditionally snakeCase).
                 </p>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Callback Parameters:</p>
+                <div class="parameter-signature">
+                    <div class="parameter-signature-items">
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">Entity: number</span>
+                            <span class="parameter-signature-item-desc">The entity ID associated with this event</span>
+                        </div>
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">Data: event table</span>
+                            <span class="parameter-signature-item-desc">The full event object containing: Event (string), Entity (number), Body (Instance?), Priority (number?)</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
+                <div class="example-signature">
+                    <div class="example-signature-content">World.SubscribeTo("takeDamage", function(entity, data)
+    print("Entity", entity, "took damage!")
+    print("Event:", data.Event)
+    print("Body:", data.Body)
+    print("Priority:", data.Priority)
+end)</div>
+                </div>
                 <div class="method-divider"></div>
             </section>
             <section id="update">
@@ -391,18 +457,18 @@
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
                 <div class="example-signature">
                     <div class="example-signature-content">Events = {
-    ["Damage"] = {
-        [1] = { Event = "Damage", Entity = 1, Body = part1, Priority = 10 },
-        [2] = { Event = "Damage", Entity = 2, Body = part2, Priority = 5 }
+    ["takeDamage"] = {
+        [1] = { Event = "takeDamage", Entity = 1, Body = part1, Priority = 10 },
+        [2] = { Event = "takeDamage", Entity = 2, Body = part2, Priority = 5 }
     },
-    ["Death"] = {
-        [3] = { Event = "Death", Entity = 3, Priority = 20 }
+    ["playerDied"] = {
+        [3] = { Event = "playerDied", Entity = 3, Priority = 20 }
     }
 }</div>
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
-                    The Events table is swapped with <a class="property" href="#next">Next</a> during each <a class="method" href="#update">Update</a> call. Use <a class="method" href="#read-event">ReadEvent</a> or <a class="method" href="#read-entity-event">ReadEntityEvent</a> to query events safely.
+                    The Events table is swapped with <a class="property" href="#next">Next</a> during each <a class="method" href="#update">Update</a> call. Event names traditionally follow snakeCase convention. Each event must have an Event (name) and Entity field. See <a class="method" href="#fire-event">FireEvent</a> for complete event structure requirements.
                 </p>
                 <div class="method-divider"></div>
             </section>
@@ -427,7 +493,7 @@
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
-                    This table becomes the <a class="property" href="#events">Events</a> table during the next <a class="method" href="#update">Update</a> call. The current Events table then becomes Next.
+                    This table becomes the <a class="property" href="#events">Events</a> table during the next <a class="method" href="#update">Update</a> call. The current Events table then becomes Next. All events must conform to the structure defined in <a class="method" href="#fire-event">FireEvent</a>.
                 </p>
                 <div class="method-divider"></div>
             </section>
