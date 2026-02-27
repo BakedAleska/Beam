@@ -231,7 +231,7 @@ function World.SubscribeTo(Event: string, Callback: (Entity: number, Data: any) 
 	end
 
 	local Sorted = {}
-	for Entity, EventData in pairs(Bucket) do
+	for _, EventData in pairs(Bucket) do
 		Sorted[#Sorted + 1] = EventData
 	end
 

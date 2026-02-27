@@ -1,6 +1,0 @@
-{
-    "stylua.targetReleaseVersion": "latest",
-    "files.associations": {
-        "*.luau": "luau"
-    }
-}
