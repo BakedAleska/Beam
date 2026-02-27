@@ -5,9 +5,6 @@
 -- #SERVICES
 local ServerScriptService = game:GetService("ServerScriptService")
 
--- #IMPORT
-local Replicator = require(script.Parent.Replicator)
-
 -- #CONSTANTS
 local NEXT_ID = 0
 local DEBUG = false
@@ -17,6 +14,7 @@ local World = {}
 World.__index = World
 World.Instance = nil :: any
 World.Cache = nil :: { any }? -- Cached system modules
+World.Systems = nil :: Folder?
 
 -- #TYPES
 export type world = {
@@ -59,7 +57,7 @@ local function AssertEventShape(Event: any)
 	end
 end
 
-function World.new(): world
+function World.new(Systems: Folder?): world
 	local self = setmetatable({
 		Alive = {},
 		Components = {},
@@ -68,6 +66,9 @@ function World.new(): world
 		Events = {}, -- The world event queue (read-only for systems)
 		Next = {}, -- The next-frame event queue
 	}, World)
+
+	World.Systems = Systems
+
 	World.Instance = self
 
 	for _, Entry in pairs(ServerScriptService.Server.Components:GetChildren()) do
@@ -138,8 +139,6 @@ function World.FireEvent(Event: event)
 		Bucket = {}
 		Events[Copy.Event] = Bucket
 	end
-
-	Replicator.Replicate(Event, Event.Body)
 
 	Bucket[Copy.Entity] = Copy
 
@@ -234,7 +233,7 @@ end
 function World.Update(dt)
 	if not World.Cache then
 		local Modules = {}
-		for _, Module in pairs(script.Parent.Systems:GetChildren()) do
+		for _, Module in pairs(World.Systems:GetChildren()) do
 			if Module:IsA("ModuleScript") then
 				Modules[#Modules + 1] = Module
 			end
