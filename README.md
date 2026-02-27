@@ -15,7 +15,6 @@ https://bakedaleska.github.io/Beam/
 
 ```lua
 local world = require(game.ServerScriptService.Beam.World)
-local RunService = game:GetService("RunService")
 
 -- Initialize world
 local World = world.new()
@@ -37,7 +36,8 @@ World.FireEvent({
     Priority = 10
 })
 
-RunService.Heartbeat:Connect(World.Update)
+-- Call update each frame
+game.RunService.Heartbeat:Connect(World.Update)
 ```
 
 ## Credits
