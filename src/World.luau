@@ -2,9 +2,6 @@
 -- @author : BakedAleska
 -- @date : 02/20/2026
 
--- #SERVICES
-local ServerScriptService = game:GetService("ServerScriptService")
-
 -- #CONSTANTS
 local NEXT_ID = 0
 local DEBUG = false
@@ -45,24 +42,24 @@ export type event = {
 	Priority: number?,
 }
 
+export type system = {
+	Name: string,
+	Instance: any,
+	Priority: number
+}
+
 function World.new(): world
 	local self = setmetatable({
 		Alive = {},
 		Components = {},
 		Bodies = setmetatable({}, { __mode = "k" }), -- Weak keys: auto-cleanup when Instance destroyed
 
-		Systems = {},
+		Systems = {} :: {{system}},
 		Events = {}, -- The world event queue (read-only for systems)
 		Next = {}, -- The next-frame event queue
 	}, World)
 
 	World.Singleton = self
-
-	for _, Entry in pairs(ServerScriptService.Server.Components:GetChildren()) do
-		if Entry:IsA("ModuleScript") then
-			self.Components[Entry.Name] = {}
-		end
-	end
 
 	return self
 end
@@ -96,7 +93,7 @@ function World.AddSystem(Module: ModuleScript, Priority: number?)
 
 	local Entry = {
 		Name = Module.Name,
-		Module = Result,
+		Instance = Result,
 		Priority = Priority or 0,
 	}
 
@@ -114,7 +111,7 @@ function World.RemoveSystem(Name: string)
 	for i = #World.Singleton.Systems, 1, -1 do
 		local Entry = World.Singleton.Systems[i]
 		if Entry.Name == Name then
-			local System = Entry.Module
+			local System = Entry.Instance
 			if type(System) == "table" and type(System.Destroy) == "function" then
 				local Ok, Err = pcall(System.Destroy, System)
 				if not Ok then
@@ -250,7 +247,7 @@ end
 
 function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak: boolean?)
 	if not World.Singleton.Components[Key] then
-		error(`"{Key}" is not a registered component key`)
+		World.Singleton.Components[Key] = {}
 	end
 
 	if Weak and not getmetatable(World.Singleton.Components[Key]) then
@@ -294,7 +291,7 @@ end
 
 function World.Update(dt)
 	for _, Entry in ipairs(World.Singleton.Systems) do
-		local Module = Entry.Module
+		local Module = Entry.Instance
 		if type(Module) == "table" and type(Module.Update) == "function" then
 			Module.Update(dt)
 		end
