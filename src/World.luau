@@ -25,18 +25,18 @@ export type world = {
 	Bodies: { [Instance]: number },
 	Events: { [string]: { event } },
 	Next: { [string]: { event } },
-	Craft_Entity: () -> number,
-	Register_Body: (Entity: number, Body: Instance) -> (),
+	CraftEntity: () -> number,
+	RegisterBody: (Entity: number, Body: Instance) -> (),
 	Count: (Components: { string }) -> string?,
 	Kill: (Entity: number) -> (),
-	For_Each: (Entity: number, Components: { string }) -> boolean,
-	Assign_Component: (Entity: number, Key: string, Data: { any }) -> (),
-	Unassign_Component: (Entity: number, Key: string) -> (),
-	Return_Entity: (Reference: Instance) -> number?,
-	Fire_Event: (Event: event) -> (),
-	Read_Entity_Event: (Entity: number, Name: string) -> (boolean, number?),
-	Read_Event: (Name: string) -> { event }?,
-	Subscribe_To: (Event: string, Callback: (Entity: number, Data: any) -> ()) -> (),
+	ForEach: (Entity: number, Components: { string }) -> boolean,
+	AssignComponent: (Entity: number, Key: string, Data: { any }) -> (),
+	UnassignComponent: (Entity: number, Key: string) -> (),
+	ReturnEntity: (Reference: Instance) -> number?,
+	FireEvent: (Event: event) -> (),
+	ReadEntityEvent: (Entity: number, Name: string) -> (boolean, number?),
+	ReadEvent: (Name: string) -> { event }?,
+	SubscribeTo: (Event: string, Callback: (Entity: number, Data: any) -> ()) -> (),
 	Update: (dt: number) -> (),
 }
 
@@ -47,7 +47,7 @@ export type event = {
 	Priority: number?,
 }
 
-local function Assert_Event_Shape(Event: any)
+local function AssertEventShape(Event: any)
 	if type(Event) ~= "table" then
 		error("[World] Event must be a table.", 3)
 	end
@@ -79,15 +79,15 @@ function World.new(): world
 	return self
 end
 
-function World.Register_Body(Entity: number, Body: Instance)
+function World.RegisterBody(Entity: number, Body: Instance)
 	World.Instance.Bodies[Body] = Entity
 end
 
-function World.Return_Entity(Reference: Instance): number?
+function World.ReturnEntity(Reference: Instance): number?
 	return World.Instance.Bodies[Reference]
 end
 
-function World.Craft_Entity(): number
+function World.CraftEntity(): number
 	NEXT_ID += 1
 
 	World.Instance.Alive[NEXT_ID] = true
@@ -117,7 +117,7 @@ function World.Count(Components: { string }): string?
 	return Smallest
 end
 
-function World.For_Each(Entity: number, Components: { string }): boolean
+function World.ForEach(Entity: number, Components: { string }): boolean
 	for _, Component in Components do
 		local Pool = World.Instance.Components[Component]
 		if not Pool or not Pool[Entity] then
@@ -127,8 +127,8 @@ function World.For_Each(Entity: number, Components: { string }): boolean
 	return true
 end
 
-function World.Fire_Event(Event: event)
-	Assert_Event_Shape(Event)
+function World.FireEvent(Event: event)
+	AssertEventShape(Event)
 
 	local Copy = table.clone(Event)
 
@@ -149,7 +149,7 @@ function World.Fire_Event(Event: event)
 	end
 end
 
-function World.Read_Entity_Event(Entity: number, Name: string): (boolean, number?)
+function World.ReadEntityEvent(Entity: number, Name: string): (boolean, number?)
 	if not World.Instance.Events[Name] then
 		return false, 0 -- 0 = No event.
 	end
@@ -164,11 +164,11 @@ function World.Read_Entity_Event(Entity: number, Name: string): (boolean, number
 	return false, 1 -- Event, but no entity in event.
 end
 
-function World.Read_Event(Name: string)
+function World.ReadEvent(Name: string)
 	return World.Instance.Events[Name]
 end
 
-function World.Subscribe_To(Event: string, Callback: (Entity: number, Data: any) -> ())
+function World.SubscribeTo(Event: string, Callback: (Entity: number, Data: any) -> ())
 	local Events = World.Instance.Events[Event] or {}
 
 	for i = 1, #Events do
@@ -178,9 +178,13 @@ function World.Subscribe_To(Event: string, Callback: (Entity: number, Data: any)
 	end
 end
 
-function World.Assign_Component(Entity: number, Key: string, Data: { any })
+function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak: boolean?)
 	if not World.Instance.Components[Key] then
 		error(`"{Key}" is not a registered component key`)
+	end
+
+	if Weak and not getmetatable(World.Instance.Components[Key]) then
+		setmetatable(World.Instance.Components[Key], { __mode = "k" })
 	end
 
 	World.Instance.Components[Key][Entity] = Data
@@ -195,7 +199,7 @@ function World.Assign_Component(Entity: number, Key: string, Data: { any })
 	end
 end
 
-function World.Unassign_Component(Entity: number, Key: string)
+function World.UnassignComponent(Entity: number, Key: string)
 	local Pool = World.Instance.Components[Key]
 	if Pool then
 		Pool[Entity] = nil
