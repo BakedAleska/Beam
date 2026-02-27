@@ -141,7 +141,7 @@ function World.FireEvent(Event: event)
 
 	Replicator.Replicate(Event, Event.Body)
 
-	Bucket[#Bucket + 1] = Copy
+	Bucket[Copy.Entity] = Copy
 
 	if DEBUG then
 		print("Firing event:", Copy.Event, "for entity:", Copy.Entity)
@@ -155,10 +155,8 @@ function World.ReadEntityEvent(Entity: number, Name: string): (boolean, number?)
 	end
 
 	local Bucket = World.Instance.Events[Name]
-	for i = 1, #Bucket do
-		if Bucket[i].Entity == Entity then
-			return true
-		end
+	if Bucket[Entity] then
+		return true
 	end
 
 	return false, 1 -- Event, but no entity in event.
@@ -169,11 +167,22 @@ function World.ReadEvent(Name: string)
 end
 
 function World.SubscribeTo(Event: string, Callback: (Entity: number, Data: any) -> ())
-	local Events = World.Instance.Events[Event] or {}
+	local Bucket = World.Instance.Events[Event]
+	if not Bucket then
+		return
+	end
 
-	for i = 1, #Events do
-		local Specified = Events[i]
+	local Sorted = {}
+	for Entity, EventData in pairs(Bucket) do
+		Sorted[#Sorted + 1] = EventData
+	end
 
+	table.sort(Sorted, function(a, b)
+		return (a.Priority or 0) > (b.Priority or 0)
+	end)
+
+	for i = 1, #Sorted do
+		local Specified = Sorted[i]
 		Callback(Specified.Entity, Specified)
 	end
 end
@@ -254,16 +263,10 @@ function World.Update(dt)
 	World.Instance.Events = World.Instance.Next
 	World.Instance.Next = Events
 
-	for _, Bucket in pairs(World.Instance.Events) do
-		table.sort(Bucket, function(a, b)
-			return (a.Priority or 0) > (b.Priority or 0)
-		end)
-	end
-
+	-- Clear all event buckets for next frame
 	for _, Bucket in pairs(World.Instance.Next) do
 		table.clear(Bucket)
 	end
-	table.clear(World.Instance.Next)
 end
 
 return World
