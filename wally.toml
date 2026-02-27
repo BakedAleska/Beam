@@ -1,9 +1,0 @@
-[package]
-name = "bakedaleska/beam"
-version = "0.1.0"
-registry = "https://github.com/UpliftGames/wally-index"
-realm = "shared"
-
-[dependencies]
-replica = "aykut92/replica@0.1.7"
-maid = "blestooo/maid@0.1.1"
