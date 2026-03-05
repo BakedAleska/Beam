@@ -19,6 +19,7 @@
                         <li>
                             <a href="#methods" class="sub-link">Methods</a>
                             <ul class="sub-sub-links">
+                                <li><a href="#new">new</a></li>
                                 <li><a href="#craft-entity">CraftEntity</a></li>
                                 <li><a href="#register-body">RegisterBody</a></li>
                                 <li><a href="#count">Count</a></li>
@@ -26,6 +27,8 @@
                                 <li><a href="#for-each">ForEach</a></li>
                                 <li><a href="#assign-component">AssignComponent</a></li>
                                 <li><a href="#unassign-component">UnassignComponent</a></li>
+                                <li><a href="#add-system">AddSystem</a></li>
+                                <li><a href="#remove-system">RemoveSystem</a></li>
                                 <li><a href="#return-entity">ReturnEntity</a></li>
                                 <li><a href="#fire-event">FireEvent</a></li>
                                 <li><a href="#read-entity-event">ReadEntityEvent</a></li>
@@ -38,6 +41,7 @@
                             <a href="#properties" class="sub-link">Properties</a>
                             <ul class="sub-sub-links">
                                 <li><a href="#components">Components</a></li>
+                                <li><a href="#systems">Systems</a></li>
                                 <li><a href="#bodies">Bodies</a></li>
                                 <li><a href="#alive">Alive</a></li>
                                 <li><a href="#events">Events</a></li>
@@ -47,8 +51,7 @@
                         <li>
                             <a href="#internals" class="sub-link">Internals</a>
                             <ul class="sub-sub-links">
-                                <li><a href="#instance">Instance</a></li>
-                                <li><a href="#cache">Cache</a></li>
+                                <li><a href="#singleton">Singleton</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -88,6 +91,29 @@
             <section id="methods">
                 <h2>Methods</h2>
             </section>
+            <section id="new">
+                <h3>new</h3>
+                <div class="type-signature">
+                    <code>new: () -> <span class="return-type">world</span></code>
+                </div>
+                <p>
+                    Creates a new World instance, initializes core tables, and sets <code>World.Singleton</code> to the new instance.
+                </p>
+                <p class="warning-title">Warning:</p>
+                <div class="warning-signature">
+                    <div class="warning-signature-content">Call <code>World.new()</code> only once per session. Creating multiple worlds will overwrite <code>World.Singleton</code> and may orphan state.</div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Returns:</p>
+                <div class="return-signature">
+                    <div class="return-signature-items">
+                        <div class="return-signature-item">
+                            <span class="return-signature-item-type">world</span>
+                            <span class="return-signature-item-desc">World instance with initialized tables and systems</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="method-divider"></div>
+            </section>
             <section id="craft-entity">
                 <h3>CraftEntity</h3>
                 <div class="type-signature">
@@ -110,18 +136,22 @@
             <section id="register-body">
                 <h3>RegisterBody</h3>
                 <div class="type-signature">
-                    <code>RegisterBody: (<span class="parameter">Entity: number, Body: Instance</span>) -> ()</code>
+                    <code>RegisterBody: (<span class="parameter">Entity</span>: number, <span class="parameter">Body</span>: Instance) -> ()</code>
                 </div>
                 <p>
                     Registers an entity-associated instance "Body", within <a class="property" href="#bodies">Bodies</a>,
                     making it easier to retrieve entity id's.
                 </p>
+                <p class="warning-title">Warning:</p>
+                <div class="warning-signature">
+                    <div class="warning-signature-content">Registering a Body that already exists will emit a warning and keep the original mapping.</div>
+                </div>
                 <div class="method-divider"></div>
             </section>
             <section id="count">
                 <h3>Count</h3>
                 <div class="type-signature">
-                    <code>Count: (<span class="parameter">Components: { string }</span>) -> <span class="return-type">string?</span></code>
+                    <code>Count: (<span class="parameter">Components</span>: { string }) -> <span class="return-type">string?</span></code>
                 </div>
                 <p>
                     Returns the component, within a given table of components, which is associated with the smallest number of entities.
@@ -141,7 +171,7 @@
             <section id="kill">
                 <h3>Kill</h3>
                 <div class="type-signature">
-                    <code>Kill: (<span class="parameter">Entity: number</span>) -> ()</code>
+                    <code>Kill: (<span class="parameter">Entity</span>: number) -> ()</code>
                 </div>
                 <p>
                     Destroys the specified entity.
@@ -151,7 +181,7 @@
             <section id="for-each">
                 <h3>ForEach</h3>
                 <div class="type-signature">
-                    <code>ForEach: (<span class="parameter">Entity: number, Components: { string }</span>) -> (<span class="return-type">boolean, number?</span>)</code>
+                    <code>ForEach: (<span class="parameter">Entity</span>: number, <span class="parameter">Components</span>: { string }) -> (<span class="return-type">boolean, number?</span>)</code>
                 </div>
                 <p>
                     Iterates through <a class="property" href="#components">Components</a>, given an entity: and returns a 
@@ -176,7 +206,7 @@
             </section>
             <section id="assign-component">
                 <h3>AssignComponent</h3>
-                <div class="type-signature">AssignComponent: (<span class="parameter">Entity: number, Key: string, Data: { any }</span>) -> ()</div>
+                <div class="type-signature">AssignComponent: (<span class="parameter">Entity</span>: number, <span class="parameter">Key</span>: string, <span class="parameter">Data</span>: { any }) -> ()</div>
                 <p>
                     Given an entity, a key (name for the component) and the components data, stores a component and its data in 
                     <a class="property" href="#components">Components</a>.
@@ -186,17 +216,46 @@
             <section id="unassign-component">
                 <h3>UnassignComponent</h3>
                 <div class="type-signature">
-                    <code>UnassignComponent: (<span class="parameter">Entity: number, Key: string</span>) -> ()</code>
+                    <code>UnassignComponent: (<span class="parameter">Entity</span>: number, <span class="parameter">Key</span>: string) -> ()</code>
                 </div>
                 <p>
                     Removes a component from an entity by deleting it from the <a class="property" href="#components">Components</a> table.
                 </p>
                 <div class="method-divider"></div>
             </section>
+            <section id="add-system">
+                <h3>AddSystem</h3>
+                <div class="type-signature">
+                    <code>AddSystem: (<span class="parameter">Module</span>: ModuleScript, <span class="parameter">Priority</span>: number?) -> ()</code>
+                </div>
+                <p>
+                    Adds a new system to the <a class="property" href="#systems">Systems</a> table. 
+                </p>
+                <p class="warning-title">Warning:</p>
+                <div class="warning-signature">
+                    <div class="warning-signature-content">Systems without an <code>Update</code> method are still registered but will never run. A warning is emitted at registration time.</div>
+                </div>
+                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
+                <p>
+                    The priority field determines the order of the required module instance within the sytems list. Systems are expected to include a .Update method.
+                    This method allows systems to be called each frame, in order, as the world loops through its systems table.
+                </p>
+                <div class="method-divider"></div>
+            </section>
+            <section id="remove-system">
+                <h3>RemoveSystem</h3>
+                <div class="type-signature">
+                    <code>RemoveSystem: (<span class="parameter">Name</span>: string) -> (<span class="return-type">boolean</span>)</code>
+                </div>
+                <p>
+                    Removes a system from the <a class="property" href="#systems">Systems</a> table. If the system has a valid <code>Destroy</code> method, it is called. 
+                </p>
+                <div class="method-divider"></div>
+            </section>
             <section id="return-entity">
                 <h3>ReturnEntity</h3>
                 <div class="type-signature">
-                    <code>ReturnEntity: (<span class="parameter">Reference: Instance</span>) -> <span class="return-type">number?</span></code>
+                    <code>ReturnEntity: (<span class="parameter">Reference</span>: Instance) -> <span class="return-type">number?</span></code>
                 </div>
                 <p>
                     Returns the entity ID associated with a given Instance from the <a class="property" href="#bodies">Bodies</a> table.
@@ -215,11 +274,15 @@
             <section id="fire-event">
                 <h3>FireEvent</h3>
                 <div class="type-signature">
-                    <code>FireEvent: (<span class="parameter">Event: event</span>) -> ()</code>
+                    <code>FireEvent: (<span class="parameter">Event</span>: event) -> ()</code>
                 </div>
                 <p>
                     Fires an event to be processed in the next frame. The event is added to the <a class="property" href="#next">Next</a> event queue.
                 </p>
+                <p class="warning-title">Warning:</p>
+                <div class="warning-signature">
+                    <div class="warning-signature-content">Invalid event tables throw errors. Ensure <span class="parameter">Event</span> is a string and <span class="parameter">Entity</span> is a number.</div>
+                </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Event Structure:</p>
                 <div class="parameter-signature">
                     <div class="parameter-signature-items">
@@ -259,7 +322,7 @@
             <section id="read-entity-event">
                 <h3>ReadEntityEvent</h3>
                 <div class="type-signature">
-                    <code>ReadEntityEvent: (<span class="parameter">Entity: number, Name: string</span>) -> (<span class="return-type">boolean, number?</span>)</code>
+                    <code>ReadEntityEvent: (<span class="parameter">Entity</span>: number, <span class="parameter">Name</span>: string) -> (<span class="return-type">boolean, number?</span>)</code>
                 </div>
                 <p>
                     Checks if a specific entity has a fired event of the given name in the current <a class="property" href="#events">Events</a> table. This is useful for checking if an entity received a specific event in the current frame.
@@ -283,7 +346,7 @@
             <section id="read-event">
                 <h3>ReadEvent</h3>
                 <div class="type-signature">
-                    <code>ReadEvent: (<span class="parameter">Name: string</span>) -> <span class="return-type">{ event }?</span></code>
+                    <code>ReadEvent: (<span class="parameter">Name</span>: string) -> <span class="return-type">{ event }?</span></code>
                 </div>
                 <p>
                     Returns the array of all events with a given name from the current <a class="property" href="#events">Events</a> table. Each event in the array is an event table containing Event, Entity, Body (optional), and Priority (optional) fields.
@@ -312,7 +375,7 @@ end</div>
             <section id="subscribe-to">
                 <h3>SubscribeTo</h3>
                 <div class="type-signature">
-                    <code>SubscribeTo: (<span class="parameter">Event: string, Callback: (Entity: number, Data: any) -> ()</span>) -> ()</code>
+                    <code>SubscribeTo: (<span class="parameter">Event</span>: string, <span class="parameter">Callback</span>: (<span class="parameter">Entity</span>: number, <span class="parameter">Data</span>: any) -> ()) -> ()</code>
                 </div>
                 <p>
                     Calls the provided callback for each entity that has the specified event in the current <a class="property" href="#events">Events</a> table. The Event parameter should match the Event field of fired events (traditionally camelCase).
@@ -344,7 +407,7 @@ end)</div>
             <section id="update">
                 <h3>Update</h3>
                 <div class="type-signature">
-                    <code>Update: (<span class="parameter">dt: number</span>) -> ()</code>
+                    <code>Update: (<span class="parameter">dt</span>: number) -> ()</code>
                 </div>
                 <p>
                     Updates all systems and processes events. Should be called once per game frame, normally by using RunService. Swaps <a class="property" href="#events">Events</a> with <a class="property" href="#next">Next</a>, then clears the Next queue.
@@ -389,6 +452,47 @@ end)</div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
                     Use <a class="method" href="#assign-component">AssignComponent</a> to add components and <a class="method" href="#unassign-component">UnassignComponent</a> to remove them. This table is the core of the ECS architecture.
+                </p>
+                <div class="method-divider"></div>
+            </section>
+
+            <section id="systems">
+                <h3>Systems</h3>
+                <p>An ordered list of registered systems, sorted by priority (higher runs earlier) and name as a tiebreaker.</p>
+                <div class="type-signature">
+                    <code>Systems: {  <span class="parameter">[number]</span>: { <span class="parameter">Name</span>: string, <span class="parameter">Instance</span>: any, <span class="parameter">Priority</span>: number } }</code>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Structure:</p>
+                <div class="parameter-signature">
+                    <div class="parameter-signature-items">
+                        <div class="parameter-signature-item">
+                            <span class="parameter-signature-item-type">[number]: table</span>
+                            <span class="parameter-signature-item-desc">Array index mapped to a system entry</span>
+                        </div>
+                        <div class="parameter-signature-item" style="margin-left: 20px;">
+                            <span class="parameter-signature-item-type">Name: string</span>
+                            <span class="parameter-signature-item-desc">System name (ModuleScript name)</span>
+                        </div>
+                        <div class="parameter-signature-item" style="margin-left: 20px;">
+                            <span class="parameter-signature-item-type">Instance: any</span>
+                            <span class="parameter-signature-item-desc">Required module return (table with Update/Destroy)</span>
+                        </div>
+                        <div class="parameter-signature-item" style="margin-left: 20px;">
+                            <span class="parameter-signature-item-type">Priority: number</span>
+                            <span class="parameter-signature-item-desc">Execution priority (higher runs earlier)</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
+                <div class="example-signature">
+                    <div class="example-signature-content">Systems = {
+    [1] = { Name = "Movement", Instance = MovementSystem, Priority = 100 },
+    [2] = { Name = "Damage", Instance = DamageSystem, Priority = 50 }
+}</div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
+                <p>
+                    Systems are added with <a class="method" href="#add-system">AddSystem</a> and removed with <a class="method" href="#remove-system">RemoveSystem</a>. Each entry stores the required module result; if it exposes an <code>Update</code> method it will run each frame during <a class="method" href="#update">Update</a>. If a system has a <code>Destroy</code> method it is called on removal.
                 </p>
                 <div class="method-divider"></div>
             </section>
@@ -501,11 +605,11 @@ end)</div>
             <section id="internals">
                 <h2>Internals</h2>
             </section>
-            <section id="instance">
-                <h3>Instance</h3>
+            <section id="singleton">
+                <h3>Singleton</h3>
                 <p>The singleton instance of the World. Stores the current active World object for global access.</p>
                 <div class="type-signature">
-                    <code>Instance: world?</code>
+                    <code>Singleton: world?</code>
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
@@ -513,18 +617,7 @@ end)</div>
                 </p>
                 <div class="method-divider"></div>
             </section>
-            <section id="cache">
-                <h3>Cache</h3>
-                <p>Caches loaded system modules for performance. Prevents redundant module loading during repeated <a class="method" href="#update">Update</a> calls.</p>
-                <div class="type-signature">
-                    <code>Cache: { any }?</code>
-                </div>
-                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
-                <p>
-                    The cache is populated lazily on the first <a class="method" href="#update">Update</a> call. It stores all system modules found in the Systems directory that have an Update function. Systems are sorted alphabetically by module name.
-                </p>
-                <div class="method-divider"></div>
-            </section>
+            
         </main>
     </div>
     
