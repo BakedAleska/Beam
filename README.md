@@ -22,12 +22,12 @@ local World = world.new()
 -- Create entity
 local Entity = World.CraftEntity()
 
+-- Add systems
+World.AddSystem(game.ServerScriptService.Beam.Systems.Movement, 1)
+
 -- Assign components
 World.AssignComponent(Entity, "Health", { value = 100 })
 World.AssignComponent(Entity, "Position", { x = 0, y = 0, z = 0 })
-
--- Add systems
-World.AddSystem(game.ServerScriptService.Beam.Systems.Movement, 1)
 
 -- Fire events
 World.FireEvent({
