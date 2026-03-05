@@ -22,6 +22,7 @@
                                 <li><a href="#new">new</a></li>
                                 <li><a href="#craft-entity">CraftEntity</a></li>
                                 <li><a href="#register-body">RegisterBody</a></li>
+                                <li><a href="#fetch-body">FetchBody</a></li>
                                 <li><a href="#count">Count</a></li>
                                 <li><a href="#kill">Kill</a></li>
                                 <li><a href="#for-each">ForEach</a></li>
@@ -35,6 +36,16 @@
                                 <li><a href="#read-event">ReadEvent</a></li>
                                 <li><a href="#subscribe-to">SubscribeTo</a></li>
                                 <li><a href="#update">Update</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#signals" class="sub-link">Signals</a>
+                            <ul class="sub-sub-links">
+                                <li><a href="#crafted">Crafted</a></li>
+                                <li><a href="#killed">Killed</a></li>
+                                <li><a href="#assigned-component">AssignedComponent</a></li>
+                                <li><a href="#removed-component">RemovedComponent</a></li>
+                                <li><a href="#fired">Fired</a></li>
                             </ul>
                         </li>
                         <li>
@@ -136,15 +147,43 @@
             <section id="register-body">
                 <h3>RegisterBody</h3>
                 <div class="type-signature">
-                    <code>RegisterBody: (<span class="parameter">Entity</span>: number, <span class="parameter">Body</span>: Instance) -> ()</code>
+                    <code>RegisterBody: (<span class="parameter">Entity</span>: number, <span class="parameter">Body</span>: Instance) -> <span class="return-type">Instance</span></code>
                 </div>
                 <p>
                     Registers an entity-associated instance "Body", within <a class="property" href="#bodies">Bodies</a>,
-                    making it easier to retrieve entity id's.
+                    making it easier to retrieve entity id's. Returns the registered Body instance.
                 </p>
                 <p class="warning-title">Warning:</p>
                 <div class="warning-signature">
                     <div class="warning-signature-content">Registering a Body that already exists will emit a warning and keep the original mapping.</div>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Returns:</p>
+                <div class="return-signature">
+                    <div class="return-signature-items">
+                        <div class="return-signature-item">
+                            <span class="return-signature-item-type">Instance</span>
+                            <span class="return-signature-item-desc">The registered Body instance</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="method-divider"></div>
+            </section>
+            <section id="fetch-body">
+                <h3>FetchBody</h3>
+                <div class="type-signature">
+                    <code>FetchBody: (<span class="parameter">Entity</span>: number) -> <span class="return-type">Instance?</span></code>
+                </div>
+                <p>
+                    Retrieves the Instance body associated with a given entity ID from the <a class="property" href="#bodies">Bodies</a> table.
+                </p>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Returns:</p>
+                <div class="return-signature">
+                    <div class="return-signature-items">
+                        <div class="return-signature-item">
+                            <span class="return-signature-item-type">Instance?</span>
+                            <span class="return-signature-item-desc">The Instance associated with the entity, or nil if not found</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="method-divider"></div>
             </section>
@@ -307,7 +346,7 @@
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
                 <div class="example-signature">
                     <div class="example-signature-content">World.FireEvent({
-    Event = "takeDamage",
+    Event = "take_damage",
     Entity = 5,
     Body = character,
     Priority = 10
@@ -315,7 +354,7 @@
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
-                    Event names should follow camelCase convention (e.g., "takeDamage", "playerDied", "itemCollected"). The Event and Entity fields are required; all other fields are optional but recommended for specific use cases.
+                    Event names should follow snake_case convention (e.g., "take_damage", "player_died", "item_collected"). The Event and Entity fields are required; all other fields are optional but recommended for specific use cases.
                 </p>
                 <div class="method-divider"></div>
             </section>
@@ -362,7 +401,7 @@
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
                 <div class="example-signature">
-                    <div class="example-signature-content">local events = World.ReadEvent("takeDamage")
+                    <div class="example-signature-content">local events = World.ReadEvent("take_damage")
 if events then
     for _, event in events do
         print("Entity:", event.Entity)
@@ -395,7 +434,7 @@ end</div>
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
                 <div class="example-signature">
-                    <div class="example-signature-content">World.SubscribeTo("takeDamage", function(entity, data)
+                    <div class="example-signature-content">World.SubscribeTo("take_damage", function(entity, data)
     print("Entity", entity, "took damage!")
     print("Event:", data.Event)
     print("Body:", data.Body)
@@ -415,11 +454,81 @@ end)</div>
                 <div class="method-divider"></div>
             </section>
             
+            <section id="signals">
+                <h2>Signals</h2>
+                <p>Signals are fired automatically when specific actions occur in the world. Subscribe to them with the standard Signal API:</p>
+                <div class="example-signature">
+                    <div class="example-signature-content">local connection = World.Crafted:Connect(function(EntityId)
+    print("Entity created:", EntityId)
+end)</div>
+                </div>
+            </section>
+            <section id="crafted">
+                <h3>Crafted</h3>
+                <p>Fired when a new entity is created via <a class="method" href="#craft-entity">CraftEntity</a>.</p>
+                <div class="type-signature">
+                    <code>Crafted: Signal(<span class="parameter">EntityId</span>: number)</code>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Callback:</p>
+                <div class="callback-signature">
+                    <div class="callback-signature-content"><code>function(<span class="callback-signature-item-name">EntityId</span>: <span class="callback-signature-item-type">number</span>) <span style="color: #8b949e;">-- The ID of the newly created entity</span></code></div>
+                </div>
+                <div class="method-divider"></div>
+            </section>
+            <section id="killed">
+                <h3>Killed</h3>
+                <p>Fired when an entity is destroyed via <a class="method" href="#kill">Kill</a>.</p>
+                <div class="type-signature">
+                    <code>Killed: Signal(<span class="parameter">EntityId</span>: number, <span class="parameter">RemovedCount</span>: number)</code>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Callback:</p>
+                <div class="callback-signature">
+                    <div class="callback-signature-content"><code>function(<span class="callback-signature-item-name">EntityId</span>: <span class="callback-signature-item-type">number</span>, <span class="callback-signature-item-name">RemovedCount</span>: <span class="callback-signature-item-type">number</span>)<br/><span style="color: #8b949e;">-- EntityId: The ID of the entity being destroyed<br/>-- RemovedCount: Number of components removed from the entity</span></code></div>
+                </div>
+                <div class="method-divider"></div>
+            </section>
+            <section id="assigned-component">
+                <h3>AssignedComponent</h3>
+                <p>Fired when a component is assigned to an entity via <a class="method" href="#assign-component">AssignComponent</a>.</p>
+                <div class="type-signature">
+                    <code>AssignedComponent: Signal(<span class="parameter">EntityId</span>: number, <span class="parameter">Key</span>: string, <span class="parameter">Data</span>: any, <span class="parameter">Previous</span>: any?)</code>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Callback:</p>
+                <div class="callback-signature">
+                    <div class="callback-signature-content"><code>function(<span class="callback-signature-item-name">EntityId</span>: <span class="callback-signature-item-type">number</span>, <span class="callback-signature-item-name">Key</span>: <span class="callback-signature-item-type">string</span>, <span class="callback-signature-item-name">Data</span>: <span class="callback-signature-item-type">any</span>, <span class="callback-signature-item-name">Previous</span>: <span class="callback-signature-item-type">any?</span>)<br/><span style="color: #8b949e;">-- EntityId: The ID of the entity receiving the component<br/>-- Key: The component name/key<br/>-- Data: The new component data<br/>-- Previous: Previous component data if it existed, or nil if this is a new component</span></code></div>
+                </div>
+                <div class="method-divider"></div>
+            </section>
+            <section id="removed-component">
+                <h3>RemovedComponent</h3>
+                <p>Fired when a component is removed from an entity via <a class="method" href="#unassign-component">UnassignComponent</a> or <a class="method" href="#kill">Kill</a>.</p>
+                <div class="type-signature">
+                    <code>RemovedComponent: Signal(<span class="parameter">EntityId</span>: number, <span class="parameter">Key</span>: string, <span class="parameter">Data</span>: any)</code>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Callback:</p>
+                <div class="callback-signature">
+                    <div class="callback-signature-content"><code>function(<span class="callback-signature-item-name">EntityId</span>: <span class="callback-signature-item-type">number</span>, <span class="callback-signature-item-name">Key</span>: <span class="callback-signature-item-type">string</span>, <span class="callback-signature-item-name">Data</span>: <span class="callback-signature-item-type">any</span>)<br/><span style="color: #8b949e;">-- EntityId: The ID of the entity losing the component<br/>-- Key: The component name/key<br/>-- Data: The component data that was removed</span></code></div>
+                </div>
+                <div class="method-divider"></div>
+            </section>
+            <section id="fired">
+                <h3>Fired</h3>
+                <p>Fired when an event is queued in the world via <a class="method" href="#fire-event">FireEvent</a>.</p>
+                <div class="type-signature">
+                    <code>Fired: Signal(<span class="parameter">EventName</span>: string, <span class="parameter">EventPayload</span>: event)</code>
+                </div>
+                <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Callback:</p>
+                <div class="callback-signature">
+                    <div class="callback-signature-content"><code>function(<span class="callback-signature-item-name">EventName</span>: <span class="callback-signature-item-type">string</span>, <span class="callback-signature-item-name">EventPayload</span>: <span class="callback-signature-item-type">event</span>)<br/><span style="color: #8b949e;">-- EventName: The name of the event being fired<br/>-- EventPayload: The complete event table with Event, Entity, Body?, and Priority? fields</span></code></div>
+                </div>
+                <div class="method-divider"></div>
+            </section>
+            
             <section id="properties">
                 <h2>Properties</h2>
             </section>
             <section id="components">
-                <h3>Components</h3>
+                <h3>Components <span style="color: #ab9f4d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-left: 0.5rem;">Read Only</span></h3>
                 <p>A global table that stores all components for all entities. Components are organized by entity ID, then by component name.</p>
                 <div class="type-signature">
                     <code>Components: { <span class="parameter">[number]</span>: { <span class="parameter">[string]</span>: { any } } }</code>
@@ -457,7 +566,7 @@ end)</div>
             </section>
 
             <section id="systems">
-                <h3>Systems</h3>
+                <h3>Systems <span style="color: #ab9f4d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-left: 0.5rem;">Read Only</span></h3>
                 <p>An ordered list of registered systems, sorted by priority (higher runs earlier) and name as a tiebreaker.</p>
                 <div class="type-signature">
                     <code>Systems: {  <span class="parameter">[number]</span>: { <span class="parameter">Name</span>: string, <span class="parameter">Instance</span>: any, <span class="parameter">Priority</span>: number } }</code>
@@ -498,7 +607,7 @@ end)</div>
             </section>
             
             <section id="bodies">
-                <h3>Bodies</h3>
+                <h3>Bodies <span style="color: #ab9f4d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-left: 0.5rem;">Read Only</span></h3>
                 <p>A global table that maps Instance objects to their associated entity IDs. Uses weak keys for automatic cleanup.</p>
                 <div class="type-signature">
                     <code>Bodies: { <span class="parameter">[Instance]</span>: number }</code>
@@ -519,7 +628,7 @@ end)</div>
                 <div class="method-divider"></div>
             </section>
             <section id="alive">
-                <h3>Alive</h3>
+                <h3>Alive <span style="color: #ab9f4d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-left: 0.5rem;">Read Only</span></h3>
                 <p>A global table that tracks which entities are currently alive in the world.</p>
                 <div class="type-signature">
                     <code>Alive: { <span class="parameter">[number]</span>: boolean }</code>
@@ -540,7 +649,7 @@ end)</div>
                 <div class="method-divider"></div>
             </section>
             <section id="events">
-                <h3>Events</h3>
+                <h3>Events <span style="color: #ab9f4d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-left: 0.5rem;">Read Only</span></h3>
                 <p>A global table containing the current frame's events. Each event name maps to a bucket of all events with that name.</p>
                 <div class="type-signature">
                     <code>Events: { <span class="parameter">[string]</span>: { event } }</code>
@@ -561,23 +670,23 @@ end)</div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Example:</p>
                 <div class="example-signature">
                     <div class="example-signature-content">Events = {
-    ["takeDamage"] = {
-        [1] = { Event = "takeDamage", Entity = 1, Body = part1, Priority = 10 },
-        [2] = { Event = "takeDamage", Entity = 2, Body = part2, Priority = 5 }
+    ["take_damage"] = {
+        [1] = { Event = "take_damage", Entity = 1, Body = part1, Priority = 10 },
+        [2] = { Event = "take_damage", Entity = 2, Body = part2, Priority = 5 }
     },
-    ["playerDied"] = {
-        [3] = { Event = "playerDied", Entity = 3, Priority = 20 }
+    ["player_died"] = {
+        [3] = { Event = "player_died", Entity = 3, Priority = 20 }
     }
 }</div>
                 </div>
                 <p style="font-weight: 800; color: #e6edf3; margin-bottom: -0.5rem; padding-top: 30px;">Note:</p>
                 <p>
-                    The Events table is swapped with <a class="property" href="#next">Next</a> during each <a class="method" href="#update">Update</a> call. Event names traditionally follow camelCase convention. Each event must have an Event (name) and Entity field. See <a class="method" href="#fire-event">FireEvent</a> for complete event structure requirements.
+                    The Events table is swapped with <a class="property" href="#next">Next</a> during each <a class="method" href="#update">Update</a> call. Event names should follow snake_case convention. Each event must have an Event (name) and Entity field. See <a class="method" href="#fire-event">FireEvent</a> for complete event structure requirements.
                 </p>
                 <div class="method-divider"></div>
             </section>
             <section id="next">
-                <h3>Next</h3>
+                <h3>Next <span style="color: #ab9f4d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-left: 0.5rem;">Read Only</span></h3>
                 <p>A global table containing events queued for the next frame. Events are added here via <a class="method" href="#fire-event">FireEvent</a>.</p>
                 <div class="type-signature">
                     <code>Next: { <span class="parameter">[string]</span>: { event } }</code>
@@ -606,7 +715,7 @@ end)</div>
                 <h2>Internals</h2>
             </section>
             <section id="singleton">
-                <h3>Singleton</h3>
+                <h3>Singleton <span style="color: #ab9f4d; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-left: 0.5rem;">Read Only</span></h3>
                 <p>The singleton instance of the World. Stores the current active World object for global access.</p>
                 <div class="type-signature">
                     <code>Singleton: world?</code>

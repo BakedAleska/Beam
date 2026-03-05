@@ -426,6 +426,63 @@ body {
     font-weight: 600;
 }
 
+/* Callback signature for signal/event callbacks */
+.callback-signature {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-left: 3px solid #3ab795;
+    border-radius: 6px;
+    padding: 0.75rem 1.25rem;
+    margin: 1rem 0 1.5rem;
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-mono);
+    display: inline-block;
+}
+
+.callback-signature-header {
+    color: #3ab795;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.callback-signature-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.callback-signature-item {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+    border-left: 2px solid rgba(58, 183, 149, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    background: transparent;
+}
+
+.callback-signature-item-type {
+    color: #3ab795;
+    font-weight: 600;
+    font-family: var(--font-mono);
+}
+
+.callback-signature-item-name {
+    color: #79c0ff;
+    font-weight: 600;
+}
+
+.callback-signature-item-desc {
+    color: #8b949e;
+    font-size: 0.85rem;
+    font-style: italic;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: normal;
+}
 
 .method-divider {
     border: none;

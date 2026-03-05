@@ -6,6 +6,9 @@
     "ReplicatedStorage": {
       "Beam": {
         "$path": "src"
+      },
+      "Packages": {
+        "$path": "Packages"
       }
     }
   }

@@ -6,6 +6,12 @@
 local NEXT_ID = 0
 local DEBUG = false
 
+-- #SERVICES
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- #IMPORT
+local Signal = require(ReplicatedStorage.Packages.signal)
+
 --> Declare
 local World = {}
 World.__index = World
@@ -16,6 +22,11 @@ export type world = {
 	Alive: { [number]: boolean },
 	Components: { [string]: { [number]: any } },
 	Bodies: { [Instance]: number },
+	Crafted: any,
+	Killed: any,
+	AssignedComponent: any,
+	RemovedComponent: any,
+	Fired: any,
 	Events: { [string]: { event } },
 	Next: { [string]: { event } },
 	CraftEntity: () -> number,
@@ -45,7 +56,7 @@ export type event = {
 export type system = {
 	Name: string,
 	Instance: any,
-	Priority: number
+	Priority: number,
 }
 
 function World.new(): world
@@ -54,7 +65,14 @@ function World.new(): world
 		Components = {},
 		Bodies = setmetatable({}, { __mode = "k" }), -- Weak keys: auto-cleanup when Instance destroyed
 
-		Systems = {} :: {{system}},
+		Crafted = Signal.new(),
+		Killed = Signal.new(),
+
+		AssignedComponent = Signal.new(),
+		RemovedComponent = Signal.new(),
+		Fired = Signal.new(),
+
+		Systems = {} :: { { system } },
 		Events = {}, -- The world event queue (read-only for systems)
 		Next = {}, -- The next-frame event queue
 	}, World)
@@ -126,13 +144,24 @@ function World.RemoveSystem(Name: string)
 	return false
 end
 
-function World.RegisterBody(Entity: number, Body: Instance)
+function World.RegisterBody(Entity: number, Body: Instance): Instance?
 	if World.Singleton.Bodies[Body] then
 		warn(string.format("[World] Body %s, already present.", Body.Name))
 		return
 	end
 
 	World.Singleton.Bodies[Body] = Entity
+
+	return Body --~change, Made register body return Body.
+end
+
+function World.FetchBody(Entity: number): Instance? --~change, Added FetchBody
+	for Instance, Mapped in pairs(World.Singleton.Bodies) do
+		if Mapped == Entity then
+			return Instance
+		end
+	end
+	return nil
 end
 
 function World.ReturnEntity(Reference: Instance): number?
@@ -143,6 +172,7 @@ function World.CraftEntity(): number
 	NEXT_ID += 1
 
 	World.Singleton.Alive[NEXT_ID] = true
+	World.Singleton.Crafted:Fire(NEXT_ID)
 
 	return NEXT_ID
 end
@@ -200,6 +230,7 @@ function World.FireEvent(Event: event)
 	end
 
 	Bucket[Copy.Entity] = Copy
+	World.Singleton.Fired:Fire(Copy.Event, Copy)
 
 	if DEBUG then
 		print("Firing event:", Copy.Event, "for entity:", Copy.Entity)
@@ -254,6 +285,7 @@ function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak:
 		setmetatable(World.Singleton.Components[Key], { __mode = "k" })
 	end
 
+	local Previous = World.Singleton.Components[Key][Entity]
 	World.Singleton.Components[Key][Entity] = Data
 
 	if typeof(Data) == "table" then
@@ -264,19 +296,26 @@ function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak:
 			end
 		end
 	end
+
+	World.Singleton.AssignedComponent:Fire(Entity, Key, Data, Previous)
 end
 
 function World.UnassignComponent(Entity: number, Key: string)
 	local Pool = World.Singleton.Components[Key]
 	if Pool then
+		local Previous = Pool[Entity]
 		Pool[Entity] = nil
+		if Previous ~= nil then
+			World.Singleton.RemovedComponent:Fire(Entity, Key, Previous)
+		end
 	end
 end
 
 function World.Kill(entity: number)
+	local Removed = 0
 	World.Singleton.Alive[entity] = nil
 
-	for _, Pool in pairs(World.Singleton.Components) do
+	for Key, Pool in pairs(World.Singleton.Components) do
 		local data = Pool[entity]
 		if typeof(data) == "table" then
 			for _, value in pairs(data) do
@@ -285,8 +324,14 @@ function World.Kill(entity: number)
 				end
 			end
 		end
-		Pool[entity] = nil
+		if data ~= nil then
+			Pool[entity] = nil
+			Removed += 1
+			World.Singleton.RemovedComponent:Fire(entity, Key, data)
+		end
 	end
+
+	World.Singleton.Killed:Fire(entity, Removed)
 end
 
 function World.Update(dt)
