@@ -36,6 +36,7 @@ export type world = {
 	AddSystem: (Module: ModuleScript, Priority: number?) -> (),
 	RemoveSystem: (Name: string) -> boolean,
 	ForEach: (Entity: number, Components: { string }) -> boolean,
+	GetComponent: (Entity: number, Key: string) -> any,
 	AssignComponent: (Entity: number, Key: string, Data: { any }) -> (),
 	UnassignComponent: (Entity: number, Key: string) -> (),
 	ReturnEntity: (Reference: Instance) -> number?,
@@ -274,6 +275,15 @@ function World.SubscribeTo(Event: string, Callback: (Entity: number, Data: any) 
 		local Specified = Sorted[i]
 		Callback(Specified.Entity, Specified)
 	end
+end
+
+function World.GetComponent(Entity: number, Key: string)
+	local Pool = World.Singleton.Components[Key]
+	if not Pool then
+		return nil
+	end
+
+	return Pool[Entity]
 end
 
 function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak: boolean?)
