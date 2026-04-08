@@ -5,11 +5,8 @@
 -- #CONSTANTS
 local __DEBUG__ = false
 
--- #SERVICES
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 -- #IMPORT
-local Signal = require(ReplicatedStorage.Packages.signal)
+local Signal = require(script.Signal) -- Batched Yield-Safe Signal by stravant, modified by sleitnick (MIT)
 
 -- #VARIABLES
 local NextId = 0
@@ -18,17 +15,18 @@ local NextId = 0
 local World = {}
 World.__index = World
 World.Singleton = nil :: world? -- Used to keep static references in functions (.) instead of needing the unique instance anytime a world function is called (:)
+World.Initialized = Signal.new()
 
 -- #TYPES
 export type world = {
 	Alive: { [number]: boolean },
 	Components: { [string]: { [number]: any } },
 	Bodies: { [Instance]: number },
-	Crafted: any,
-	Killed: any,
-	AssignedComponent: any,
-	RemovedComponent: any,
-	Fired: any,
+	Crafted: Signal.Connection,
+	Killed: Signal.Connection,
+	AssignedComponent: Signal.Connection,
+	UnassignedComponent: Signal.Connection,
+	Fired: Signal.Connection,
 	Events: { [string]: { event } },
 	Next: { [string]: { event } },
 	CraftEntity: () -> number,
@@ -38,7 +36,8 @@ export type world = {
 	AddSystem: (Module: ModuleScript, Priority: number?) -> (),
 	RemoveSystem: (Name: string) -> boolean,
 	ForEach: (Entity: number, Components: { string }) -> boolean,
-	GetComponent: (Entity: number, Key: string) -> any,
+	GetEntityComponent: (Entity: number, Key: string) -> any,
+	GetComponentPool: (Key: string) -> { any } | nil,
 	AssignComponent: (Entity: number, Key: string, Data: { any }) -> (),
 	UnassignComponent: (Entity: number, Key: string) -> (),
 	ReturnEntity: (Reference: Instance) -> number?,
@@ -66,13 +65,13 @@ function World.new(): world
 	local self = setmetatable({
 		Alive = {},
 		Components = {},
-		Bodies = setmetatable({}, { __mode = "k" }), -- Weak keys: auto-cleanup when Instance destroyed
+		Bodies = setmetatable({}, { __mode = "v" }), -- Weak Values: better cleanup
 
 		Crafted = Signal.new(),
 		Killed = Signal.new(),
 
 		AssignedComponent = Signal.new(),
-		RemovedComponent = Signal.new(),
+		UnassignedComponent = Signal.new(),
 		Fired = Signal.new(),
 
 		Systems = {} :: { { system } }, -- The world systems
@@ -82,6 +81,8 @@ function World.new(): world
 
 	World.Singleton = self
 
+	World.Initialized:Fire(self)
+
 	return self
 end
 
@@ -90,6 +91,11 @@ Adds a new system to the Systems table. with optional priority -- default priori
 world singleton.
 --]]
 function World.AddSystem(Module: ModuleScript, Priority: number?)
+	if not World.Singleton or not World.Singleton.Systems then
+		warn("[World] Uninitialized")
+		return
+	end
+
 	if not Module or not Module:IsA("ModuleScript") then
 		warn("[World] AddSystem expected a ModuleScript.")
 		return
@@ -136,6 +142,11 @@ end
 Removes a system from the Systems table. If the system has a valid Destroy method, it's called. 
 --]]
 function World.RemoveSystem(Name: string)
+	if not World.Singleton or not World.Singleton.Systems then
+		warn("[World] Uninitialized")
+		return
+	end
+
 	for i = #World.Singleton.Systems, 1, -1 do
 		local Entry = World.Singleton.Systems[i]
 		if Entry.Name == Name then
@@ -161,6 +172,11 @@ EX: The players entity would have a Player body of type 'Player'
 such that ReturnEntity can be called to receive the entities ID.
 --]]
 function World.RegisterBody(Entity: number, Body: Instance): Instance?
+	if not World.Singleton or not World.Singleton.Bodies then
+		warn("[World] Uninitialized")
+		return
+	end
+
 	if World.Singleton.Bodies[Body] then
 		warn(string.format("[World] Body %s, already present.", Body.Name))
 		return
@@ -188,13 +204,23 @@ end
 Returns the entity ID associated with a given Instance from the Bodies table. 
 --]]
 function World.ReturnEntity(Reference: Instance): number?
+	if not World.Singleton or not World.Singleton.Bodies then
+		warn("[World] Uninitialized")
+		return
+	end
+
 	return World.Singleton.Bodies[Reference]
 end
 
 --[[
 Creates a new entity in the world, returning that entities id. 
 --]]
-function World.CraftEntity(): number
+function World.CraftEntity(): number?
+	if not World.Singleton then
+		warn("[World] Uninitialized")
+		return
+	end
+
 	NextId += 1
 
 	World.Singleton.Alive[NextId] = true
@@ -253,6 +279,13 @@ end
 Fires an event to be processed in the next frame. The event is added to the Next event queue. 
 
 Events are processed in the next frame to ensure no skipped events.
+
+@shape: 
+world.FireEvent
+({
+	Event = "EVENT_KEY",
+	Entity = ENTITY,
+})
 
 SKIPPED EVENT CASE: If System1 is loaded in the same frame but before System2, and System1 listens for an event from 
 System2, then that event is skipped. By listening to events in the NEXT frame this is not a concern. Priority also helps
@@ -345,7 +378,7 @@ end
 --[[
 Returns the specific component instance associated with an entity.
 --]]
-function World.GetComponent(Entity: number, Key: string) --~NoDocumentation
+function World.GetEntityComponent(Entity: number, Key: string) --~NoDocumentation
 	local Pool = World.Singleton.Components[Key]
 	if not Pool then
 		return nil
@@ -355,19 +388,31 @@ function World.GetComponent(Entity: number, Key: string) --~NoDocumentation
 end
 
 --[[
+Returns the components entity pool, E.G returns a component.
+--]]
+function World.GetComponentPool(Key: string) --~NoDocumentation
+	return World.Singleton.Components[Key] or nil
+end
+
+--[[
 Given an entity, a key (name for the component) and the components data, stores a component and its data in Components. 
 --]]
-function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak: boolean?)
+function World.AssignComponent(Entity: number, Key: string, Data: { any })
+	if not World.Singleton or not World.Singleton.Components then
+		warn("[World] Uninitialized")
+		return
+	end
+
 	if not World.Singleton.Components[Key] then
 		World.Singleton.Components[Key] = {}
 	end
 
-	if Weak and not getmetatable(World.Singleton.Components[Key]) then
-		setmetatable(World.Singleton.Components[Key], { __mode = "k" })
-	end
-
 	local Previous = World.Singleton.Components[Key][Entity]
 	World.Singleton.Components[Key][Entity] = Data
+
+	if Previous ~= nil then
+		warn(string.format("[World] Overwriting existing component '%s' for entity %d", Key, Entity))
+	end
 
 	if typeof(Data) == "table" then
 		for _, value in pairs(Data) do
@@ -385,14 +430,41 @@ end
 Removes a component from an entity by deleting it from the Components table. 
 --]]
 function World.UnassignComponent(Entity: number, Key: string)
+	if not World.Singleton or not World.Singleton.Components then
+		warn("[World] Uninitialized")
+		return
+	end
+
 	local Pool = World.Singleton.Components[Key]
 	if Pool then
 		local Previous = Pool[Entity]
 		Pool[Entity] = nil
 		if Previous ~= nil then
-			World.Singleton.RemovedComponent:Fire(Entity, Key, Previous)
+			World.Singleton.UnassignedComponent:Fire(Entity, Key, Previous)
 		end
 	end
+end
+
+--[[
+Allows to not have to call World.Singleton each time a signal is listened to, as this is the
+architecture of the rest of the module.
+--]]
+function World.Connect( --~NoDocumentation
+	Signal: "AssignedComponent" | "UnassignedComponent" | "Killed" | "Fired" | "Crafted",
+	Callback: (any) -> any
+)
+	if not World.Singleton then
+		warn("[World] Uninitialized")
+		return
+	end
+
+	local signal = World.Singleton[Signal]
+	if not signal then
+		warn("[World] No such valid signal.")
+		return
+	end
+
+	signal:Connect(Callback)
 end
 
 --[[
@@ -416,6 +488,11 @@ function World.Kill(entity: number)
 			Removed += 1
 			World.Singleton.RemovedComponent:Fire(entity, Key, data)
 		end
+	end
+
+	if World.Singleton.Bodies[entity] then
+		World.Singleton.Bodies[entity]:Destroy()
+		World.Singleton.Bodies[entity] = nil
 	end
 
 	World.Singleton.Killed:Fire(entity, Removed)

@@ -43,3 +43,4 @@ game.RunService.Heartbeat:Connect(World.Update)
 ## Credits
 
 - **Author** - BakedAleska
+- **Signal** - [stravant](https://github.com/stravant) (original), [sleitnick](https://github.com/Sleitnick) (modified for Knit) — Batched Yield-Safe Signal, MIT License

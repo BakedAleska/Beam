@@ -8,4 +8,6 @@
 /Packages
 src/Examples
 
+/server
+
 sourcemap.json
