@@ -3,8 +3,7 @@
 -- @date : 02/20/2026
 
 -- #CONSTANTS
-local NEXT_ID = 0
-local DEBUG = false
+local __DEBUG__ = false
 
 -- #SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,10 +11,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- #IMPORT
 local Signal = require(ReplicatedStorage.Packages.signal)
 
+-- #VARIABLES
+local NextId = 0
+
 --> Declare
 local World = {}
 World.__index = World
-World.Singleton = nil :: world?
+World.Singleton = nil :: world? -- Used to keep static references in functions (.) instead of needing the unique instance anytime a world function is called (:)
 
 -- #TYPES
 export type world = {
@@ -73,9 +75,9 @@ function World.new(): world
 		RemovedComponent = Signal.new(),
 		Fired = Signal.new(),
 
-		Systems = {} :: { { system } },
+		Systems = {} :: { { system } }, -- The world systems
 		Events = {}, -- The world event queue (read-only for systems)
-		Next = {}, -- The next-frame event queue
+		Next = {}, -- The next-frame event queue (used to prevent skipped events [system priority also mediates this])
 	}, World)
 
 	World.Singleton = self
@@ -83,6 +85,10 @@ function World.new(): world
 	return self
 end
 
+--[[
+Adds a new system to the Systems table. with optional priority -- default priority 1. Used to keep a reference to systems in the 
+world singleton.
+--]]
 function World.AddSystem(Module: ModuleScript, Priority: number?)
 	if not Module or not Module:IsA("ModuleScript") then
 		warn("[World] AddSystem expected a ModuleScript.")
@@ -126,6 +132,9 @@ function World.AddSystem(Module: ModuleScript, Priority: number?)
 	end)
 end
 
+--[[
+Removes a system from the Systems table. If the system has a valid Destroy method, it's called. 
+--]]
 function World.RemoveSystem(Name: string)
 	for i = #World.Singleton.Systems, 1, -1 do
 		local Entry = World.Singleton.Systems[i]
@@ -145,6 +154,12 @@ function World.RemoveSystem(Name: string)
 	return false
 end
 
+--[[
+Registers a "body" to be associated with an entity. Allows for easier retreival of entity specific components.
+
+EX: The players entity would have a Player body of type 'Player' 
+such that ReturnEntity can be called to receive the entities ID.
+--]]
 function World.RegisterBody(Entity: number, Body: Instance): Instance?
 	if World.Singleton.Bodies[Body] then
 		warn(string.format("[World] Body %s, already present.", Body.Name))
@@ -153,10 +168,14 @@ function World.RegisterBody(Entity: number, Body: Instance): Instance?
 
 	World.Singleton.Bodies[Body] = Entity
 
-	return Body --~change, Made register body return Body.
+	return Body
 end
 
-function World.FetchBody(Entity: number): Instance? --~change, Added FetchBody
+--[[
+Retrieves the Instance body associated with a given entity ID from the Bodies table. 
+Essentially a reverse ReturnEntity
+--]]
+function World.FetchBody(Entity: number): Instance?
 	for Instance, Mapped in pairs(World.Singleton.Bodies) do
 		if Mapped == Entity then
 			return Instance
@@ -165,19 +184,35 @@ function World.FetchBody(Entity: number): Instance? --~change, Added FetchBody
 	return nil
 end
 
+--[[
+Returns the entity ID associated with a given Instance from the Bodies table. 
+--]]
 function World.ReturnEntity(Reference: Instance): number?
 	return World.Singleton.Bodies[Reference]
 end
 
+--[[
+Creates a new entity in the world, returning that entities id. 
+--]]
 function World.CraftEntity(): number
-	NEXT_ID += 1
+	NextId += 1
 
-	World.Singleton.Alive[NEXT_ID] = true
-	World.Singleton.Crafted:Fire(NEXT_ID)
+	World.Singleton.Alive[NextId] = true
+	World.Singleton.Crafted:Fire(NextId)
 
-	return NEXT_ID
+	return NextId
 end
 
+--[[
+Returns the component, within a given table of components, 
+which is associated with the smallest number of entities. 
+
+Used: primarily for fast, mutli-component access; alongside ForEach
+
+EX: Say a system needs C1, C2, C3 each of which being components, instead of looping through all entities in the game
+loop through the entities in whichever component has the LEAST amount of entities associated with it given
+from Count
+--]]
 function World.Count(Components: { string }): string?
 	local Counter = math.huge
 	local Smallest: string? = nil
@@ -200,6 +235,10 @@ function World.Count(Components: { string }): string?
 	return Smallest
 end
 
+--[[
+Iterates through multiuple Components, given an entity: and returns a boolean representing 
+whether or not that entity has all the listed components. 
+--]]
 function World.ForEach(Entity: number, Components: { string }): boolean
 	for _, Component in Components do
 		local Pool = World.Singleton.Components[Component]
@@ -210,6 +249,15 @@ function World.ForEach(Entity: number, Components: { string }): boolean
 	return true
 end
 
+--[[
+Fires an event to be processed in the next frame. The event is added to the Next event queue. 
+
+Events are processed in the next frame to ensure no skipped events.
+
+SKIPPED EVENT CASE: If System1 is loaded in the same frame but before System2, and System1 listens for an event from 
+System2, then that event is skipped. By listening to events in the NEXT frame this is not a concern. Priority also helps
+mitigate this, but this is a surefire way to avoid micromanagement.
+--]]
 function World.FireEvent(Event: event)
 	if type(Event) ~= "table" then
 		error("[World] Event must be a table.", 3)
@@ -233,12 +281,19 @@ function World.FireEvent(Event: event)
 	Bucket[Copy.Entity] = Copy
 	World.Singleton.Fired:Fire(Copy.Event, Copy)
 
-	if DEBUG then
+	if __DEBUG__ then
 		print("Firing event:", Copy.Event, "for entity:", Copy.Entity)
 		print("Current Events table:", World.Singleton.Events)
 	end
 end
 
+--[[
+Checks if a specific entity has a fired event of the given name in the current Events table. 
+
+This is useful for checking if an entity received a specific event in the current frame. 
+
+SubscribeTo is the more commonly used "Do X when this event happens" function.
+--]]
 function World.ReadEntityEvent(Entity: number, Name: string): (boolean, number?)
 	if not World.Singleton.Events[Name] then
 		return false, 0 -- 0 = No event.
@@ -252,10 +307,20 @@ function World.ReadEntityEvent(Entity: number, Name: string): (boolean, number?)
 	return false, 1 -- Event, but no entity in event.
 end
 
+--[[
+Returns the array of all events with a given name from the current Events table. 
+
+Each event in the array is an event table containing Event, Entity, Body (optional), and Priority (optional) fields. 
+--]]
 function World.ReadEvent(Name: string)
 	return World.Singleton.Events[Name]
 end
 
+--[[
+Calls the provided callback for each entity that has the specified event in the current Events table. 
+
+The Event parameter should match the Event field of fired events (keep event case consistent). 
+--]]
 function World.SubscribeTo(Event: string, Callback: (Entity: number, Data: any) -> ())
 	local Bucket = World.Singleton.Events[Event]
 	if not Bucket then
@@ -277,7 +342,10 @@ function World.SubscribeTo(Event: string, Callback: (Entity: number, Data: any) 
 	end
 end
 
-function World.GetComponent(Entity: number, Key: string)
+--[[
+Returns the specific component instance associated with an entity.
+--]]
+function World.GetComponent(Entity: number, Key: string) --~NoDocumentation
 	local Pool = World.Singleton.Components[Key]
 	if not Pool then
 		return nil
@@ -286,6 +354,9 @@ function World.GetComponent(Entity: number, Key: string)
 	return Pool[Entity]
 end
 
+--[[
+Given an entity, a key (name for the component) and the components data, stores a component and its data in Components. 
+--]]
 function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak: boolean?)
 	if not World.Singleton.Components[Key] then
 		World.Singleton.Components[Key] = {}
@@ -310,6 +381,9 @@ function World.AssignComponent(Entity: number, Key: string, Data: { any }, Weak:
 	World.Singleton.AssignedComponent:Fire(Entity, Key, Data, Previous)
 end
 
+--[[
+Removes a component from an entity by deleting it from the Components table. 
+--]]
 function World.UnassignComponent(Entity: number, Key: string)
 	local Pool = World.Singleton.Components[Key]
 	if Pool then
@@ -321,6 +395,9 @@ function World.UnassignComponent(Entity: number, Key: string)
 	end
 end
 
+--[[
+Destroys the specified entity. 
+--]]
 function World.Kill(entity: number)
 	local Removed = 0
 	World.Singleton.Alive[entity] = nil
@@ -344,7 +421,10 @@ function World.Kill(entity: number)
 	World.Singleton.Killed:Fire(entity, Removed)
 end
 
-function World.Update(dt)
+--[[
+Updates all systems and processes events. Should be called once per frame, normally by using RunService. Swaps Events with Next, then clears the Next queue. 
+--]]
+function World.Update(dt) --~Add: Rate limiting (X times per second)
 	for _, Entry in ipairs(World.Singleton.Systems) do
 		local Module = Entry.Instance
 		if type(Module) == "table" and type(Module.Update) == "function" then
