@@ -61,7 +61,12 @@ export type system = {
 	Priority: number,
 }
 
-function World.new(): world
+function World.new(): world?
+	if World.Singleton then
+		warn("[World] Already initialized.")
+		return
+	end
+
 	local self = setmetatable({
 		Alive = {},
 		Components = {},
